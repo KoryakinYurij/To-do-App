@@ -5,6 +5,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import type { EventClickArg, EventDropArg, EventInput } from '@fullcalendar/core';
 import { useTaskStore } from '../store/useTaskStore';
 import { TaskModal } from '../components/TaskModal';
+import { ensureDate } from '../utils/dateUtils';
 import type { Task } from '../types';
 
 const DEFAULT_EVENT_DURATION_MINUTES = 60;
@@ -18,7 +19,7 @@ export function CalendarPage() {
     () =>
       tasks.filter(
         (task): task is Task & { deadline: Date } =>
-          task.status === 'calendared' && task.deadline !== undefined,
+          task.status === 'calendared' && ensureDate(task.deadline) !== undefined,
       ),
     [tasks],
   );
@@ -34,7 +35,7 @@ export function CalendarPage() {
   const calendarEvents = useMemo<EventInput[]>(() => {
     return calendaredTasks.map((task) => {
       const project = projects.find((p) => p.id === task.projectId);
-      const start = new Date(task.deadline);
+      const start = ensureDate(task.deadline)!;
       const durationMinutes = task.estimatedMinutes ?? DEFAULT_EVENT_DURATION_MINUTES;
       const end = new Date(start.getTime() + durationMinutes * 60000);
 

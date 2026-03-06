@@ -5,6 +5,7 @@ import { useTaskStore } from '../store/useTaskStore';
 import type { Task, TaskStatus } from '../types';
 import { format } from 'date-fns';
 import { cn } from '../utils/cn';
+import { ensureDate } from '../utils/dateUtils';
 
 interface TaskItemProps {
   task: Task;
@@ -190,13 +191,13 @@ export function TaskItem({ task, onEdit }: TaskItemProps) {
           </div>
 
           <div className="flex items-center gap-4 mt-3 text-[11px] font-medium text-slate-400">
-            {task.deadline && (
+            {ensureDate(task.deadline) && (
               <span className={cn(
                 "flex items-center gap-1.5",
-                new Date(task.deadline) < new Date() && task.status !== 'done' ? "text-rose-500" : ""
+                ensureDate(task.deadline)! < new Date() && task.status !== 'done' ? "text-rose-500" : ""
               )}>
                 <Calendar className="w-3.5 h-3.5" />
-                {format(new Date(task.deadline), 'MMM d, yyyy')}
+                {format(ensureDate(task.deadline)!, 'MMM d, yyyy')}
               </span>
             )}
             {task.estimatedMinutes && (

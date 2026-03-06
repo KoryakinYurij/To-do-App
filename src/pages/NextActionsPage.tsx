@@ -5,6 +5,7 @@ import { TaskModal } from '../components/TaskModal';
 import type { Task } from '../types';
 import { differenceInDays, isPast, isToday } from 'date-fns';
 import { Zap, ArrowDownToLine, Calendar, AlertCircle } from 'lucide-react';
+import { ensureDate } from '../utils/dateUtils';
 
 function calculateScore(task: Task, currentContext: string | null): number {
   let score = 0;
@@ -13,8 +14,8 @@ function calculateScore(task: Task, currentContext: string | null): number {
     score += 40;
   }
 
-  if (task.deadline) {
-    const deadline = new Date(task.deadline);
+  const deadline = ensureDate(task.deadline);
+  if (deadline) {
     const daysUntil = differenceInDays(deadline, new Date());
     
     if (isPast(deadline) && !isToday(deadline)) {

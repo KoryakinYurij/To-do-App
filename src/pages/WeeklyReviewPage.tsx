@@ -9,6 +9,7 @@ import {
 } from 'date-fns';
 import { CheckCircle2, AlertTriangle, Clock3, MoveRight, Calendar, Plus } from 'lucide-react';
 import { useTaskStore } from '../store/useTaskStore';
+import { ensureDate, shiftDatePreservingTime, parseDateFromInput } from '../utils/dateUtils';
 import type { Task } from '../types';
 
 function hasStarted(date: Date, boundary: Date): boolean {
@@ -38,11 +39,12 @@ export function WeeklyReviewPage() {
   };
 
   const isOverdue = (task: Task): boolean => {
-    if (!task.deadline) {
+    const deadline = ensureDate(task.deadline);
+    if (!deadline) {
       return false;
     }
 
-    return isBefore(new Date(task.deadline), now);
+    return isBefore(deadline, now);
   };
 
   const completedThisWeek = tasks
@@ -59,15 +61,18 @@ export function WeeklyReviewPage() {
   const incompleteTasks = tasks
     .filter((task) => task.status !== 'done')
     .sort((left, right) => {
-      if (left.deadline && right.deadline) {
-        return new Date(left.deadline).getTime() - new Date(right.deadline).getTime();
+      const leftDeadline = ensureDate(left.deadline);
+      const rightDeadline = ensureDate(right.deadline);
+
+      if (leftDeadline && rightDeadline) {
+        return leftDeadline.getTime() - rightDeadline.getTime();
       }
 
-      if (left.deadline) {
+      if (leftDeadline) {
         return -1;
       }
 
-      if (right.deadline) {
+      if (rightDeadline) {
         return 1;
       }
 
@@ -102,17 +107,13 @@ export function WeeklyReviewPage() {
             return;
           }
 
-          const nextDeadline = new Date(nextWeekStart);
+          const currentDeadline = ensureDate(task.deadline);
+          let nextDeadline: Date;
 
-          if (task.deadline) {
-            const previousDeadline = new Date(task.deadline);
-            nextDeadline.setHours(
-              previousDeadline.getHours(),
-              previousDeadline.getMinutes(),
-              previousDeadline.getSeconds(),
-              previousDeadline.getMilliseconds(),
-            );
+          if (currentDeadline) {
+            nextDeadline = shiftDatePreservingTime(currentDeadline, nextWeekStart);
           } else {
+            nextDeadline = new Date(nextWeekStart);
             nextDeadline.setHours(9, 0, 0, 0);
           }
 
@@ -142,7 +143,7 @@ export function WeeklyReviewPage() {
         projectId: undefined,
         tagIds: [],
         contextIds: [],
-        deadline: new Date(nextWeekDeadline),
+        deadline: parseDateFromInput(nextWeekDeadline),
         estimatedMinutes: undefined,
         dependsOnTaskId: undefined,
         status: 'inbox',
@@ -282,10 +283,10 @@ export function WeeklyReviewPage() {
                             isOverdue(task) ? 'text-rose-500' : 'text-slate-400'
                           }`}
                         >
-                          {task.deadline ? (
+                          {ensureDate(task.deadline) ? (
                             <>
                               <Calendar className="w-3 h-3" />
-                              {format(new Date(task.deadline), 'MMM d, yyyy')}
+                              {format(ensureDate(task.deadline)!, 'MMM d, yyyy')}
                             </>
                           ) : 'No deadline'}
                         </span>
