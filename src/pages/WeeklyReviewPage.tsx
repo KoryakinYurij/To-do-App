@@ -143,7 +143,7 @@ export function WeeklyReviewPage() {
         projectId: undefined,
         tagIds: [],
         contextIds: [],
-        deadline: parseDateFromInput(nextWeekDeadline),
+        deadline: parseDateFromInput(nextWeekDeadline, nextWeekStart),
         estimatedMinutes: undefined,
         dependsOnTaskId: undefined,
         status: 'inbox',

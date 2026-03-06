@@ -43,14 +43,7 @@ export function TaskItem({ task, onEdit }: TaskItemProps) {
   };
 
   const handleStatusChange = async (newStatus: TaskStatus) => {
-    if (newStatus === 'done') {
-      await taskActions.update(task.id, { 
-        status: newStatus, 
-        completedAt: new Date() 
-      });
-    } else {
-      await taskActions.update(task.id, { status: newStatus });
-    }
+    await taskActions.update(task.id, { status: newStatus });
   };
 
   const toggleDone = async () => {

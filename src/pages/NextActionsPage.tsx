@@ -71,10 +71,7 @@ export function NextActionsPage() {
         return;
       }
     }
-    await taskActions.update(taskId, { 
-      status: 'done', 
-      completedAt: new Date() 
-    });
+    await taskActions.update(taskId, { status: 'done' });
   };
 
   const handleMoveToInbox = async (taskId: string) => {

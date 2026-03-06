@@ -15,6 +15,23 @@ export interface TaskSlice {
   };
 }
 
+/**
+ * Ensures completedAt is correctly set or cleared based on task status.
+ */
+function prepareTaskUpdates(updates: Partial<Task>): Partial<Task> {
+  const result = { ...updates, updatedAt: new Date() };
+
+  if (updates.status === 'done') {
+    if (!updates.completedAt) {
+      result.completedAt = new Date();
+    }
+  } else if (updates.status && updates.status !== 'done') {
+    result.completedAt = undefined;
+  }
+
+  return result;
+}
+
 export const createTaskSlice: StateCreator<TaskSlice, [], [], TaskSlice> = (set, get) => ({
   tasks: [],
   taskActions: {
@@ -31,35 +48,42 @@ export const createTaskSlice: StateCreator<TaskSlice, [], [], TaskSlice> = (set,
         createdAt: now,
         updatedAt: now,
       };
+
+      // Ensure completedAt consistency for new tasks
+      if (task.status === 'done' && !task.completedAt) {
+        task.completedAt = now;
+      } else if (task.status !== 'done') {
+        task.completedAt = undefined;
+      }
+
       await db.tasks.add(task);
       set((state) => ({ tasks: [...state.tasks, task] }));
       return task;
     },
 
     update: async (id, updates) => {
-      const updatedData = { ...updates, updatedAt: new Date() };
+      const updatedData = prepareTaskUpdates(updates);
+
       await db.tasks.update(id, updatedData);
-      set((state) => ({
-        tasks: state.tasks.map((t) =>
-          t.id === id ? { ...t, ...updatedData } : t
-        ),
-      }));
+
+      // Update local state by fetching latest tasks to ensure consistency
+      const tasks = await db.tasks.toArray();
+      set({ tasks });
     },
 
     delete: async (id) => {
       // Data integrity: tasks that depend on this task should have their dependsOnTaskId cleared
       await db.transaction('rw', [db.tasks], async () => {
         await db.tasks.delete(id);
-        const dependentTasks = await db.tasks
-          .toCollection()
-          .filter((task) => task.dependsOnTaskId === id)
-          .toArray();
-        for (const task of dependentTasks) {
-          await db.tasks.update(task.id, {
+
+        // Use modify for more efficient cleanup
+        await db.tasks
+          .where('dependsOnTaskId')
+          .equals(id)
+          .modify({
             dependsOnTaskId: undefined,
-            updatedAt: new Date(),
+            updatedAt: new Date()
           });
-        }
       });
 
       // Update local state

@@ -67,7 +67,6 @@ export function TaskForm({ open, onOpenChange, editTask }: TaskFormProps) {
       estimatedMinutes: estimatedMinutes ? Number(estimatedMinutes) : undefined,
       dependsOnTaskId: dependsOnTaskId || undefined,
       status: editTask?.status || 'inbox' as const,
-      completedAt: editTask?.completedAt,
     };
 
     if (editTask) {

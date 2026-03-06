@@ -47,21 +47,22 @@ export const createContextSlice: StateCreator<ContextSlice & { taskActions: { ge
       // Data integrity: remove contextId from all tasks referencing it
       await db.transaction('rw', [db.contexts, db.tasks], async () => {
         await db.contexts.delete(id);
-        const tasks = await db.tasks.toArray();
-        for (const task of tasks) {
-          if (task.contextIds.includes(id)) {
-            const newContextIds = task.contextIds.filter(contextId => contextId !== id);
-            await db.tasks.update(task.id, { contextIds: newContextIds, updatedAt: new Date() });
-          }
-        }
+
+        await db.tasks
+          .toCollection()
+          .filter(task => task.contextIds.includes(id))
+          .modify(task => {
+            task.contextIds = task.contextIds.filter(contextId => contextId !== id);
+            task.updatedAt = new Date();
+          });
       });
 
       // Update local state
       const contexts = await db.contexts.toArray();
-      set({
+      set((state) => ({
         contexts,
-        currentContext: get().currentContext === id ? null : get().currentContext
-      });
+        currentContext: state.currentContext === id ? null : state.currentContext
+      }));
 
       // Trigger a task refresh to update local task state
       await get().taskActions.getAll();

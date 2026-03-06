@@ -44,10 +44,14 @@ export const createProjectSlice: StateCreator<ProjectSlice & { taskActions: { ge
       // Data integrity: clear projectId for all tasks referencing this project
       await db.transaction('rw', [db.projects, db.tasks], async () => {
         await db.projects.delete(id);
-        const tasks = await db.tasks.where('projectId').equals(id).toArray();
-        for (const task of tasks) {
-          await db.tasks.update(task.id, { projectId: undefined, updatedAt: new Date() });
-        }
+
+        await db.tasks
+          .where('projectId')
+          .equals(id)
+          .modify({
+            projectId: undefined,
+            updatedAt: new Date()
+          });
       });
 
       // Update local state

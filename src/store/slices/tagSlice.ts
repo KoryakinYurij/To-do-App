@@ -44,13 +44,14 @@ export const createTagSlice: StateCreator<TagSlice & { taskActions: { getAll: ()
       // Data integrity: remove tagId from all tasks referencing it
       await db.transaction('rw', [db.tags, db.tasks], async () => {
         await db.tags.delete(id);
-        const tasks = await db.tasks.toArray();
-        for (const task of tasks) {
-          if (task.tagIds.includes(id)) {
-            const newTagIds = task.tagIds.filter(tagId => tagId !== id);
-            await db.tasks.update(task.id, { tagIds: newTagIds, updatedAt: new Date() });
-          }
-        }
+
+        await db.tasks
+          .toCollection()
+          .filter(task => task.tagIds.includes(id))
+          .modify(task => {
+            task.tagIds = task.tagIds.filter(tagId => tagId !== id);
+            task.updatedAt = new Date();
+          });
       });
 
       // Update local state
