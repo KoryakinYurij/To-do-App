@@ -4,7 +4,7 @@ import { TaskItem } from '../components/TaskItem';
 import { TaskModal } from '../components/TaskModal';
 import type { Task } from '../types';
 import { differenceInDays, isPast, isToday } from 'date-fns';
-import { Zap, ArrowDownToLine, Calendar } from 'lucide-react';
+import { Zap, ArrowDownToLine, Calendar, AlertCircle } from 'lucide-react';
 
 function calculateScore(task: Task, currentContext: string | null): number {
   let score = 0;
@@ -88,85 +88,103 @@ export function NextActionsPage() {
     setEditingTask(task);
   };
 
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600 bg-green-50 border-green-100';
+    if (score >= 60) return 'text-blue-600 bg-blue-50 border-blue-100';
+    if (score >= 40) return 'text-amber-600 bg-amber-50 border-amber-100';
+    return 'text-slate-400 bg-slate-50 border-slate-100';
+  };
+
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-800">Next Actions</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Top {scoredTasks.length} tasks based on context, deadline, and project
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-900">Next Actions</h1>
+        <p className="text-slate-500 mt-2">
+          Your top {scoredTasks.length} priorities, calculated based on context, deadlines, and project importance.
         </p>
       </div>
 
       {currentContext && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-700">
-            <strong>@{currentContext}</strong>
-           Filtering by context:</p>
+        <div className="mb-6 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+            <Zap className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-indigo-900">Active Context: @{currentContext}</p>
+            <p className="text-xs text-indigo-700/70">Tasks are prioritized for your current environment.</p>
+          </div>
         </div>
       )}
 
       {warning && (
-        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-sm text-amber-700">{warning}</p>
-          <button 
-            type="button"
-            onClick={() => setWarning(null)}
-            className="text-xs text-amber-600 underline mt-1"
-          >
-            Dismiss
-          </button>
+        <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-rose-600 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-rose-900">{warning}</p>
+            <button
+              type="button"
+              onClick={() => setWarning(null)}
+              className="text-xs text-rose-700 font-bold uppercase tracking-wider mt-1 hover:text-rose-800 transition-colors"
+            >
+              Dismiss
+            </button>
+          </div>
         </div>
       )}
 
       {scoredTasks.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Zap className="w-8 h-8 text-slate-400" />
+        <div className="text-center py-24 bg-white border border-slate-200 rounded-3xl">
+          <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Zap className="w-10 h-10 text-slate-300" />
           </div>
-          <h3 className="text-lg font-medium text-slate-700">No tasks to show</h3>
-          <p className="text-sm text-slate-500 mt-1">
-            Add tasks to your inbox or mark some as Next Actions
+          <h3 className="text-xl font-bold text-slate-800">No actions recommended</h3>
+          <p className="text-slate-500 mt-2 max-w-sm mx-auto px-4">
+            Try switching contexts or adding more tasks to your inbox to see new recommendations.
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {scoredTasks.map(task => (
-            <div key={task.id} className="relative">
-              <div className="absolute -left-12 top-4 flex flex-col items-center">
-                <span className={`
-                  text-lg font-bold
-                  ${task.score >= 80 ? 'text-green-600' : 
-                    task.score >= 60 ? 'text-blue-600' : 
-                    task.score >= 40 ? 'text-yellow-600' : 'text-slate-400'}
+        <div className="space-y-6">
+          {scoredTasks.map((task, index) => (
+            <div key={task.id} className="relative pl-14">
+              <div className="absolute left-0 top-4 flex flex-col items-center gap-1">
+                <div className={`
+                  w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-bold shadow-sm
+                  ${getScoreColor(task.score)}
                 `}>
                   {task.score}
-                </span>
+                </div>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                  Rank #{index + 1}
+                </div>
               </div>
+
               <TaskItem task={task} onEdit={handleEdit} />
-              <div className="flex gap-2 mt-2 ml-4">
+
+              <div className="flex items-center gap-2 mt-3 ml-2">
                 <button
                   type="button"
                   onClick={() => handleDoIt(task.id)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 active:scale-95 transition-all shadow-sm"
                 >
-                  <Zap className="w-4 h-4" />
-                  Do it
+                  <Zap className="w-4 h-4 fill-current" />
+                  Complete Now
                 </button>
+                <div className="h-4 w-px bg-slate-200 mx-1" />
                 <button
                   type="button"
                   onClick={() => handleMoveToInbox(task.id)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"
+                  className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-medium transition-all"
                 >
                   <ArrowDownToLine className="w-4 h-4" />
-                  Inbox
+                  Move to Inbox
                 </button>
                 <button
                   type="button"
                   onClick={() => handleMoveToCalendar(task.id)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"
+                  className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-medium transition-all"
                 >
                   <Calendar className="w-4 h-4" />
-                  Calendar
+                  Schedule
                 </button>
               </div>
             </div>
