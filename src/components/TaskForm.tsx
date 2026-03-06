@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Calendar, Clock, ChevronDown, Plus } from 'lucide-react';
 import { useTaskStore } from '../store/useTaskStore';
+import { formatDateForInput, parseDateFromInput } from '../utils/dateUtils';
 import type { Task } from '../types';
 
 interface TaskFormProps {
@@ -43,7 +44,7 @@ export function TaskForm({ open, onOpenChange, editTask }: TaskFormProps) {
         setProjectId(editTask.projectId || '');
         setSelectedTags(editTask.tagIds);
         setSelectedContexts(editTask.contextIds);
-        setDeadline(editTask.deadline ? new Date(editTask.deadline).toISOString().split('T')[0] : '');
+        setDeadline(formatDateForInput(editTask.deadline));
         setEstimatedMinutes(editTask.estimatedMinutes || '');
         setDependsOnTaskId(editTask.dependsOnTaskId || '');
       } else {
@@ -62,11 +63,10 @@ export function TaskForm({ open, onOpenChange, editTask }: TaskFormProps) {
       projectId: projectId || undefined,
       tagIds: selectedTags,
       contextIds: selectedContexts,
-      deadline: deadline ? new Date(deadline) : undefined,
+      deadline: parseDateFromInput(deadline, editTask?.deadline),
       estimatedMinutes: estimatedMinutes ? Number(estimatedMinutes) : undefined,
       dependsOnTaskId: dependsOnTaskId || undefined,
       status: editTask?.status || 'inbox' as const,
-      completedAt: editTask?.completedAt,
     };
 
     if (editTask) {

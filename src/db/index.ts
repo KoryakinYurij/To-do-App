@@ -16,6 +16,11 @@ export class AppDatabase extends Dexie {
       tags: 'id, name',
       contexts: 'id, name',
     });
+
+    // Add dependsOnTaskId to index for better query performance during deletion cleanup
+    this.version(2).stores({
+      tasks: 'id, status, projectId, createdAt, deadline, dependsOnTaskId',
+    });
   }
 }
 
